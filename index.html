@@ -1,0 +1,1263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<title>MarketX</title>
+
+<!-- Официальный Telegram WebApp SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@400;600;700;900&family=Geologica:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+<style>
+/* ═══════════════════════════════════
+   TELEGRAM THEME INTEGRATION
+   Используем нативные цвета Telegram
+═══════════════════════════════════ */
+:root {
+  --tg-bg: var(--tg-theme-bg-color, #17212b);
+  --tg-sec-bg: var(--tg-theme-secondary-bg-color, #232e3c);
+  --tg-text: var(--tg-theme-text-color, #f5f5f5);
+  --tg-hint: var(--tg-theme-hint-color, #708499);
+  --tg-link: var(--tg-theme-link-color, #5288c1);
+  --tg-btn: var(--tg-theme-button-color, #5288c1);
+  --tg-btn-text: var(--tg-theme-button-text-color, #ffffff);
+
+  --accent: #3b82f6;
+  --accent-glow: rgba(59,130,246,0.25);
+  --accent2: #f43f5e;
+  --accent3: #10b981;
+  --gold: #f59e0b;
+  --surface: rgba(255,255,255,0.04);
+  --surface2: rgba(255,255,255,0.07);
+  --border: rgba(255,255,255,0.08);
+  --nav-h: 64px;
+  --safe-bottom: env(safe-area-inset-bottom, 0px);
+}
+
+* {
+  margin:0; padding:0; box-sizing:border-box;
+  -webkit-tap-highlight-color:transparent;
+  -webkit-touch-callout:none;
+}
+
+html, body {
+  height:100%;
+  font-family:'Geologica', sans-serif;
+  background: var(--tg-bg);
+  color: var(--tg-text);
+  overflow:hidden;
+  position:fixed;
+  width:100%;
+}
+
+/* ═══════════════ SCROLL CONTAINER ═══════════════ */
+.app-scroll {
+  position:fixed;
+  top:0; left:0; right:0;
+  bottom: calc(var(--nav-h) + var(--safe-bottom));
+  overflow-y: auto;
+  overflow-x: hidden;
+  -webkit-overflow-scrolling: touch;
+  scroll-behavior: smooth;
+}
+.app-scroll::-webkit-scrollbar { display:none; }
+
+/* ═══════════════ BACKGROUND ═══════════════ */
+.bg-mesh {
+  position:fixed; inset:0; pointer-events:none; z-index:0;
+  background:
+    radial-gradient(ellipse 70% 50% at 10% 0%, rgba(59,130,246,0.12) 0%, transparent 55%),
+    radial-gradient(ellipse 50% 40% at 90% 100%, rgba(244,63,94,0.08) 0%, transparent 55%);
+}
+
+/* ═══════════════ PAGES ═══════════════ */
+.page {
+  display: none;
+  padding: 16px 16px calc(20px);
+  position: relative; z-index: 1;
+  min-height: calc(100vh - var(--nav-h) - var(--safe-bottom));
+  animation: pgIn 0.22s ease;
+}
+.page.active { display: block; }
+@keyframes pgIn {
+  from { opacity:0; transform:translateY(10px); }
+  to   { opacity:1; transform:translateY(0); }
+}
+
+/* ═══════════════ TYPOGRAPHY ═══════════════ */
+.page-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 22px; font-weight: 800;
+  letter-spacing: -0.5px;
+  margin-bottom: 4px;
+}
+.page-sub {
+  font-size: 13px; color: var(--tg-hint);
+  margin-bottom: 18px;
+}
+
+/* ═══════════════ HEADER SECTION (HOME) ═══════════════ */
+.home-header {
+  display: flex; align-items: center;
+  justify-content: space-between;
+  margin-bottom: 18px;
+}
+.greeting-wrap .greeting-label {
+  font-size: 12px; color: var(--tg-hint);
+}
+.greeting-wrap .greeting-name {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 18px; font-weight: 700;
+}
+.role-pill {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 6px 14px; border-radius: 20px;
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.3px;
+  border: 1px solid transparent;
+  cursor: pointer; transition: transform .15s;
+}
+.role-pill:active { transform: scale(0.94); }
+.rp-owner  { background: rgba(245,158,11,0.15); color: var(--gold);   border-color: rgba(245,158,11,0.3); }
+.rp-mod    { background: rgba(139,92,246,0.15);  color: #8b5cf6;      border-color: rgba(139,92,246,0.3); }
+.rp-user   { background: rgba(112,132,153,0.15); color: var(--tg-hint); border-color: var(--border); }
+
+/* ═══════════════ HERO BANNER ═══════════════ */
+.hero-banner {
+  background: linear-gradient(135deg, #1d4ed8 0%, #3b82f6 50%, #06b6d4 100%);
+  border-radius: 20px; padding: 20px;
+  margin-bottom: 18px;
+  position: relative; overflow: hidden;
+}
+.hero-banner::before {
+  content: '';
+  position: absolute; right: -15px; top: -25px;
+  width: 110px; height: 110px;
+  background: rgba(255,255,255,0.1);
+  border-radius: 50%;
+}
+.hero-banner::after {
+  content: '';
+  position: absolute; right: 30px; bottom: -30px;
+  width: 80px; height: 80px;
+  background: rgba(255,255,255,0.06);
+  border-radius: 50%;
+}
+.hero-tag {
+  display: inline-block;
+  background: rgba(255,255,255,0.2);
+  border-radius: 8px; padding: 3px 10px;
+  font-size: 11px; font-weight: 600;
+  margin-bottom: 8px;
+}
+.hero-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 17px; font-weight: 800;
+  margin-bottom: 4px; line-height: 1.3;
+}
+.hero-sub { font-size: 12px; opacity: 0.85; margin-bottom: 14px; }
+.hero-btn {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: #fff; color: #1d4ed8;
+  border: none; border-radius: 12px;
+  padding: 9px 18px; font-size: 12px; font-weight: 700;
+  font-family: 'Geologica', sans-serif;
+  cursor: pointer; transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.2);
+}
+.hero-btn:active { transform: scale(0.95); }
+
+/* ═══════════════ SEARCH ═══════════════ */
+.search-wrap {
+  position: relative; margin-bottom: 14px;
+}
+.search-ico {
+  position: absolute; left: 14px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 15px; color: var(--tg-hint);
+  pointer-events: none;
+}
+.search-input {
+  width: 100%;
+  background: var(--tg-sec-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px;
+  padding: 12px 16px 12px 42px;
+  color: var(--tg-text);
+  font-family: 'Geologica', sans-serif;
+  font-size: 14px; outline: none;
+  transition: border-color .2s, background .2s;
+  -webkit-appearance: none;
+}
+.search-input:focus {
+  border-color: rgba(59,130,246,0.5);
+  background: var(--surface2);
+}
+.search-input::placeholder { color: var(--tg-hint); }
+
+/* ═══════════════ CHIPS ═══════════════ */
+.chips-row {
+  display: flex; gap: 8px;
+  overflow-x: auto; padding-bottom: 2px;
+  margin-bottom: 16px; scrollbar-width: none;
+}
+.chips-row::-webkit-scrollbar { display: none; }
+.chip {
+  flex-shrink: 0;
+  padding: 7px 13px; border-radius: 20px;
+  font-size: 12px; font-weight: 600;
+  border: 1px solid var(--border);
+  background: var(--tg-sec-bg);
+  color: var(--tg-hint);
+  cursor: pointer; transition: all .18s;
+  white-space: nowrap; user-select: none;
+}
+.chip.on {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #fff;
+}
+.chip:active { transform: scale(0.93); }
+
+/* ═══════════════ PRODUCT GRID ═══════════════ */
+.product-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 12px;
+}
+.prod-card {
+  background: var(--tg-sec-bg);
+  border: 1px solid var(--border);
+  border-radius: 18px; overflow: hidden;
+  cursor: pointer; transition: transform .18s;
+  position: relative;
+  animation: cardIn .3s ease both;
+}
+.prod-card:active { transform: scale(0.96); }
+@keyframes cardIn {
+  from { opacity:0; transform:scale(0.94); }
+  to   { opacity:1; transform:scale(1); }
+}
+.prod-img {
+  width: 100%; height: 130px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 52px; position: relative;
+}
+.prod-badge {
+  position: absolute; top: 8px; right: 8px;
+  padding: 2px 8px; border-radius: 6px;
+  font-size: 10px; font-weight: 700;
+}
+.pb-hot  { background: var(--accent2); color: #fff; }
+.pb-new  { background: var(--accent3); color: #fff; }
+.pb-sale { background: var(--gold);    color: #000; }
+.fav-ico {
+  position: absolute; top: 8px; left: 8px;
+  width: 30px; height: 30px; border-radius: 50%;
+  background: rgba(0,0,0,0.35); backdrop-filter: blur(8px);
+  border: none; display: flex; align-items: center; justify-content: center;
+  font-size: 15px; cursor: pointer;
+  transition: transform .18s, background .18s;
+}
+.fav-ico.on { background: rgba(244,63,94,0.3); }
+.fav-ico:active { transform: scale(1.25); }
+.prod-body { padding: 11px 12px; }
+.prod-name {
+  font-size: 13px; font-weight: 600;
+  line-height: 1.3; margin-bottom: 6px;
+}
+.prod-bottom { display: flex; align-items: center; justify-content: space-between; }
+.prod-price {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 13px; font-weight: 800;
+  color: var(--accent);
+}
+.buy-btn-mini {
+  width: 28px; height: 28px; border-radius: 8px;
+  background: var(--accent); border: none;
+  color: #fff; font-size: 16px; line-height: 1;
+  cursor: pointer; display: flex; align-items: center; justify-content: center;
+  transition: transform .15s;
+}
+.buy-btn-mini:active { transform: scale(0.88); }
+.prod-seller { font-size: 10px; color: var(--tg-hint); margin-top: 4px; }
+
+/* ═══════════════ SECTION LABEL ═══════════════ */
+.sec-label {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 11px; font-weight: 700;
+  color: var(--tg-hint); text-transform: uppercase;
+  letter-spacing: 1.2px; margin-bottom: 12px;
+}
+
+/* ═══════════════ MY LISTINGS ═══════════════ */
+.add-listing-btn {
+  width: 100%; border: 2px dashed rgba(59,130,246,0.4);
+  background: rgba(59,130,246,0.06);
+  border-radius: 16px; padding: 16px;
+  display: flex; align-items: center; justify-content: center; gap: 8px;
+  color: var(--accent); font-weight: 700; font-size: 14px;
+  font-family: 'Geologica', sans-serif;
+  cursor: pointer; margin-bottom: 16px;
+  transition: all .2s;
+}
+.add-listing-btn:active { transform: scale(0.98); background: rgba(59,130,246,0.12); }
+.listing-item {
+  background: var(--tg-sec-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 14px;
+  display: flex; gap: 12px; align-items: center;
+  margin-bottom: 10px; cursor: pointer;
+  transition: transform .18s;
+}
+.listing-item:active { transform: scale(0.98); }
+.li-emoji {
+  width: 54px; height: 54px; border-radius: 14px;
+  background: var(--surface2);
+  display: flex; align-items: center; justify-content: center;
+  font-size: 28px; flex-shrink: 0;
+}
+.li-info { flex: 1; min-width: 0; }
+.li-name { font-size: 14px; font-weight: 600; margin-bottom: 3px; }
+.li-desc {
+  font-size: 12px; color: var(--tg-hint);
+  white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+}
+.li-row { display: flex; align-items: center; justify-content: space-between; margin-top: 7px; }
+.li-price {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 13px; font-weight: 800; color: var(--accent);
+}
+.status-chip {
+  font-size: 10px; font-weight: 700;
+  padding: 3px 9px; border-radius: 7px;
+}
+.s-active  { background: rgba(16,185,129,0.15); color: var(--accent3); }
+.s-sold    { background: rgba(244,63,94,0.15);   color: var(--accent2); }
+.s-pending { background: rgba(245,158,11,0.15);  color: var(--gold); }
+
+/* ═══════════════ FAVORITES ═══════════════ */
+.empty-wrap {
+  display: flex; flex-direction: column;
+  align-items: center; justify-content: center;
+  padding: 60px 20px; text-align: center;
+}
+.empty-emoji { font-size: 60px; margin-bottom: 14px; }
+.empty-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 16px; font-weight: 700; margin-bottom: 6px;
+}
+.empty-sub { font-size: 13px; color: var(--tg-hint); }
+
+/* ═══════════════ PROFILE ═══════════════ */
+.profile-hero {
+  background: var(--tg-sec-bg);
+  border: 1px solid var(--border);
+  border-radius: 22px; padding: 22px;
+  text-align: center; margin-bottom: 16px;
+  position: relative; overflow: hidden;
+}
+.profile-hero::before {
+  content: '';
+  position: absolute; top: 0; left: 0; right: 0; height: 70px;
+  background: linear-gradient(135deg, rgba(59,130,246,0.2), rgba(244,63,94,0.1));
+}
+.p-avatar-wrap { position: relative; display: inline-block; margin-bottom: 12px; }
+.p-avatar {
+  width: 76px; height: 76px; border-radius: 50%;
+  background: linear-gradient(135deg, #3b82f6, #f43f5e);
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 26px; font-weight: 800;
+  border: 3px solid var(--tg-bg);
+  overflow: hidden;
+  position: relative; z-index: 1;
+}
+.p-avatar img { width: 100%; height: 100%; object-fit: cover; }
+.p-crown {
+  position: absolute; top: -6px; right: -4px;
+  font-size: 20px; z-index: 2;
+}
+.p-name {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 17px; font-weight: 800; margin-bottom: 6px;
+}
+.p-role-tag {
+  display: inline-flex; align-items: center; gap: 5px;
+  padding: 5px 16px; border-radius: 20px;
+  font-size: 12px; font-weight: 700;
+  margin-bottom: 16px;
+  border: 1px solid transparent;
+}
+.prt-owner  { background: rgba(245,158,11,0.15); color: var(--gold);  border-color: rgba(245,158,11,0.3); }
+.prt-mod    { background: rgba(139,92,246,0.15);  color: #8b5cf6;     border-color: rgba(139,92,246,0.3); }
+.prt-user   { background: rgba(112,132,153,0.15); color: var(--tg-hint); border-color: var(--border); }
+.stats-grid {
+  display: grid; grid-template-columns: repeat(3, 1fr);
+  gap: 1px; background: var(--border);
+  border-radius: 14px; overflow: hidden;
+}
+.stat-box {
+  background: var(--tg-bg);
+  padding: 12px 6px; text-align: center;
+}
+.stat-val {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 15px; font-weight: 800; color: var(--accent);
+}
+.stat-key { font-size: 10px; color: var(--tg-hint); margin-top: 2px; }
+
+.settings-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
+.settings-row {
+  background: var(--tg-sec-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 14px 16px;
+  display: flex; align-items: center; gap: 12px;
+  cursor: pointer; transition: transform .15s;
+}
+.settings-row:active { transform: scale(0.98); }
+.sr-icon { font-size: 20px; width: 32px; text-align: center; }
+.sr-text { flex: 1; font-size: 14px; font-weight: 500; }
+.sr-arr { color: var(--tg-hint); font-size: 18px; }
+.sr-danger { color: var(--accent2); }
+
+/* ═══════════════ ADMIN PANEL ═══════════════ */
+.admin-hero {
+  background: linear-gradient(135deg, rgba(245,158,11,0.15), rgba(59,130,246,0.1));
+  border: 1px solid rgba(245,158,11,0.25);
+  border-radius: 20px; padding: 18px;
+  display: flex; align-items: center; gap: 14px;
+  margin-bottom: 18px;
+}
+.admin-hero-icon { font-size: 40px; }
+.admin-hero-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 14px; font-weight: 800;
+  color: var(--gold); margin-bottom: 3px;
+}
+.admin-hero-sub { font-size: 12px; color: var(--tg-hint); }
+.stats-4 {
+  display: grid; grid-template-columns: repeat(2, 1fr);
+  gap: 10px; margin-bottom: 18px;
+}
+.stat-card {
+  background: var(--tg-sec-bg);
+  border: 1px solid var(--border);
+  border-radius: 16px; padding: 16px;
+  text-align: center; cursor: pointer;
+  transition: transform .15s;
+}
+.stat-card:active { transform: scale(0.95); }
+.sc-icon { font-size: 26px; margin-bottom: 6px; }
+.sc-val {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 19px; font-weight: 800; margin-bottom: 2px;
+}
+.sc-key { font-size: 11px; color: var(--tg-hint); }
+.user-row {
+  background: var(--tg-sec-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 12px 14px;
+  display: flex; align-items: center; gap: 12px;
+  margin-bottom: 8px; cursor: pointer;
+  transition: transform .15s;
+}
+.user-row:active { transform: scale(0.98); }
+.ur-av {
+  width: 42px; height: 42px; border-radius: 50%;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Unbounded', sans-serif;
+  font-size: 15px; font-weight: 700; flex-shrink: 0;
+}
+.ur-name { font-size: 13px; font-weight: 600; }
+.ur-role { font-size: 11px; margin-top: 2px; }
+.ur-btns { margin-left: auto; display: flex; gap: 6px; }
+.ur-btn {
+  padding: 5px 10px; border-radius: 8px;
+  font-size: 11px; font-weight: 700;
+  border: none; cursor: pointer;
+  font-family: 'Geologica', sans-serif;
+  transition: transform .15s;
+}
+.ur-btn:active { transform: scale(0.9); }
+.urb-w { background: rgba(245,158,11,0.15); color: var(--gold); }
+.urb-b { background: rgba(244,63,94,0.15);  color: var(--accent2); }
+.urb-m { background: rgba(139,92,246,0.15); color: #8b5cf6; }
+.tg-username { font-size: 11px; color: var(--tg-hint); font-style: normal; }
+
+/* ═══════════════ BOTTOM NAV ═══════════════ */
+.bottom-nav {
+  position: fixed;
+  bottom: 0; left: 0; right: 0;
+  height: calc(var(--nav-h) + var(--safe-bottom));
+  padding-bottom: var(--safe-bottom);
+  background: rgba(23,33,43,0.92);
+  backdrop-filter: blur(28px) saturate(1.4);
+  -webkit-backdrop-filter: blur(28px) saturate(1.4);
+  border-top: 1px solid var(--border);
+  display: flex; z-index: 100;
+}
+.nav-btn {
+  flex: 1; display: flex; flex-direction: column;
+  align-items: center; justify-content: center; gap: 4px;
+  background: none; border: none;
+  color: var(--tg-hint);
+  cursor: pointer; transition: color .2s;
+  padding: 0; position: relative;
+}
+.nav-btn.on { color: var(--accent); }
+.nav-btn .n-ico {
+  font-size: 23px;
+  transition: transform .2s;
+  display: block;
+}
+.nav-btn.on .n-ico { transform: scale(1.15); }
+.nav-btn .n-lbl { font-size: 10px; font-weight: 600; }
+.nav-badge {
+  position: absolute; top: 5px;
+  left: calc(50% + 4px);
+  width: 8px; height: 8px; border-radius: 50%;
+  background: var(--accent2);
+  border: 2px solid var(--tg-bg);
+}
+/* Active tab indicator */
+.nav-btn.on::after {
+  content: '';
+  position: absolute; bottom: -1px;
+  width: 28px; height: 2px;
+  background: var(--accent);
+  border-radius: 2px 2px 0 0;
+}
+
+/* ═══════════════ MODAL ═══════════════ */
+.modal-bg {
+  position: fixed; inset: 0; z-index: 200;
+  background: rgba(0,0,0,0.65);
+  backdrop-filter: blur(4px);
+  display: none; align-items: flex-end;
+}
+.modal-bg.open { display: flex; }
+.modal-sheet {
+  width: 100%; max-height: 90vh;
+  background: var(--tg-sec-bg);
+  border-radius: 22px 22px 0 0;
+  overflow-y: auto; padding: 0 18px 32px;
+  animation: sheetUp .28s cubic-bezier(.32,1.2,.64,1);
+}
+.modal-sheet::-webkit-scrollbar { display: none; }
+@keyframes sheetUp {
+  from { transform: translateY(100%); }
+  to   { transform: translateY(0); }
+}
+.modal-handle {
+  width: 38px; height: 4px; border-radius: 2px;
+  background: var(--border); margin: 14px auto 18px;
+}
+.modal-title {
+  font-family: 'Unbounded', sans-serif;
+  font-size: 18px; font-weight: 800; margin-bottom: 18px;
+}
+.form-block { margin-bottom: 14px; }
+.form-lbl {
+  font-size: 11px; font-weight: 700;
+  color: var(--tg-hint); text-transform: uppercase;
+  letter-spacing: 0.8px; margin-bottom: 7px; display: block;
+}
+.form-ctrl {
+  width: 100%;
+  background: var(--tg-bg);
+  border: 1px solid var(--border);
+  border-radius: 13px;
+  padding: 13px 15px;
+  color: var(--tg-text);
+  font-family: 'Geologica', sans-serif;
+  font-size: 14px; outline: none;
+  transition: border-color .2s;
+  -webkit-appearance: none; appearance: none;
+}
+.form-ctrl:focus { border-color: rgba(59,130,246,0.5); }
+.form-ctrl::placeholder { color: var(--tg-hint); }
+textarea.form-ctrl { resize: none; min-height: 80px; }
+.emoji-grid {
+  display: grid; grid-template-columns: repeat(6, 1fr);
+  gap: 8px;
+}
+.ej-opt {
+  aspect-ratio: 1; border-radius: 11px;
+  background: var(--tg-bg);
+  border: 2px solid transparent;
+  display: flex; align-items: center; justify-content: center;
+  font-size: 26px; cursor: pointer;
+  transition: border-color .15s, transform .15s;
+}
+.ej-opt.sel { border-color: var(--accent); }
+.ej-opt:active { transform: scale(0.88); }
+.submit-btn {
+  width: 100%;
+  background: linear-gradient(135deg, #2563eb, #3b82f6);
+  border: none; border-radius: 15px; padding: 16px;
+  color: #fff; font-family: 'Geologica', sans-serif;
+  font-size: 15px; font-weight: 700;
+  cursor: pointer; margin-top: 8px;
+  transition: transform .15s, box-shadow .15s;
+  box-shadow: 0 4px 20px rgba(59,130,246,0.35);
+}
+.submit-btn:active { transform: scale(0.97); }
+
+/* ═══════════════ PRODUCT DETAIL MODAL ═══════════════ */
+.pd-img { font-size: 80px; text-align: center; padding: 20px; background: var(--surface); border-radius: 16px; margin-bottom: 16px; }
+.pd-name { font-family: 'Unbounded', sans-serif; font-size: 18px; font-weight: 800; margin-bottom: 4px; }
+.pd-price { font-family: 'Unbounded', sans-serif; font-size: 22px; font-weight: 900; color: var(--accent); margin-bottom: 6px; }
+.pd-seller { font-size: 12px; color: var(--tg-hint); margin-bottom: 14px; }
+.pd-desc { font-size: 14px; color: var(--tg-hint); line-height: 1.6; margin-bottom: 20px; }
+
+/* ═══════════════ TOAST ═══════════════ */
+.toast {
+  position: fixed; top: 16px; left: 16px; right: 16px;
+  z-index: 300;
+  background: var(--tg-sec-bg);
+  border: 1px solid var(--border);
+  border-radius: 14px; padding: 13px 16px;
+  display: flex; align-items: center; gap: 10px;
+  transform: translateY(calc(-100% - 30px));
+  transition: transform .3s cubic-bezier(.34,1.56,.64,1);
+  box-shadow: 0 8px 40px rgba(0,0,0,0.4);
+}
+.toast.show { transform: translateY(0); }
+.t-ico { font-size: 20px; }
+.t-txt { font-size: 13px; font-weight: 500; }
+
+/* ═══════════════ UTILS ═══════════════ */
+.gap-row { display: flex; gap: 8px; }
+.flex-between { display: flex; align-items: center; justify-content: space-between; margin-bottom: 14px; }
+.view-all { font-size: 12px; color: var(--accent); font-weight: 600; cursor: pointer; }
+
+/* ═══════════════ TELEGRAM HAPTIC PULSE ═══════════════ */
+@keyframes hapticPulse {
+  0%,100% { transform: scale(1); }
+  50% { transform: scale(0.94); }
+}
+</style>
+</head>
+<body>
+<div class="bg-mesh"></div>
+
+<!-- ═══════════ TOAST ═══════════ -->
+<div class="toast" id="toast">
+  <span class="t-ico" id="t-ico">✅</span>
+  <span class="t-txt" id="t-txt">Готово</span>
+</div>
+
+<!-- ═══════════ SCROLL WRAPPER ═══════════ -->
+<div class="app-scroll" id="appScroll">
+
+  <!-- ══════ PAGE: HOME ══════ -->
+  <div class="page active" id="pg-home">
+    <div class="home-header">
+      <div class="greeting-wrap">
+        <div class="greeting-label">Добро пожаловать,</div>
+        <div class="greeting-name" id="tg-name">Пользователь</div>
+      </div>
+      <div class="role-pill rp-owner" id="rolePill" onclick="goPage('admin')">👑 Владелец</div>
+    </div>
+
+    <div class="hero-banner">
+      <div class="hero-tag">🔥 Акция дня</div>
+      <div class="hero-title">Скидки до 60%<br>на топ товары</div>
+      <div class="hero-sub">Только сегодня — лучшие предложения</div>
+      <button class="hero-btn" onclick="haptic('light');filterChip('all')">Смотреть →</button>
+    </div>
+
+    <div class="search-wrap">
+      <span class="search-ico">🔍</span>
+      <input class="search-input" id="searchInp" placeholder="Поиск товаров..." oninput="searchProducts(this.value)">
+    </div>
+
+    <div class="chips-row" id="chipsRow">
+      <div class="chip on" data-cat="all" onclick="filterChip('all')">Все</div>
+      <div class="chip" data-cat="electronics" onclick="filterChip('electronics')">📱 Электроника</div>
+      <div class="chip" data-cat="clothes"     onclick="filterChip('clothes')">👗 Одежда</div>
+      <div class="chip" data-cat="games"       onclick="filterChip('games')">🎮 Игры</div>
+      <div class="chip" data-cat="home"        onclick="filterChip('home')">🏠 Дом</div>
+      <div class="chip" data-cat="sport"       onclick="filterChip('sport')">⚽ Спорт</div>
+      <div class="chip" data-cat="beauty"      onclick="filterChip('beauty')">💄 Красота</div>
+    </div>
+
+    <div class="flex-between">
+      <div class="sec-label">Каталог товаров</div>
+      <div class="view-all" onclick="haptic('light')">Все →</div>
+    </div>
+    <div class="product-grid" id="productGrid"></div>
+  </div>
+
+  <!-- ══════ PAGE: LISTINGS ══════ -->
+  <div class="page" id="pg-listings">
+    <div class="page-title">Мои объявления</div>
+    <div class="page-sub">Управляйте своими товарами</div>
+    <button class="add-listing-btn" onclick="openAddModal()">＋ Добавить объявление</button>
+    <div id="myListingsWrap"></div>
+  </div>
+
+  <!-- ══════ PAGE: FAVORITES ══════ -->
+  <div class="page" id="pg-fav">
+    <div class="page-title">Избранное</div>
+    <div class="page-sub">Сохранённые товары</div>
+    <div class="product-grid" id="favGrid"></div>
+    <div class="empty-wrap" id="favEmpty" style="display:none">
+      <div class="empty-emoji">💫</div>
+      <div class="empty-title">Список пуст</div>
+      <div class="empty-sub">Нажимай ♡ на товарах, чтобы сохранить</div>
+    </div>
+  </div>
+
+  <!-- ══════ PAGE: ADMIN ══════ -->
+  <div class="page" id="pg-admin">
+    <div class="admin-hero">
+      <div class="admin-hero-icon">👑</div>
+      <div>
+        <div class="admin-hero-title">Панель управления</div>
+        <div class="admin-hero-sub">Полный доступ к платформе MarketX</div>
+      </div>
+    </div>
+
+    <div class="stats-4">
+      <div class="stat-card" onclick="haptic('medium');toast('👥','Пользователи загружены')">
+        <div class="sc-icon">👥</div>
+        <div class="sc-val">1,247</div>
+        <div class="sc-key">Пользователей</div>
+      </div>
+      <div class="stat-card" onclick="haptic('medium');toast('📦','Объявления загружены')">
+        <div class="sc-icon">📦</div>
+        <div class="sc-val">3,891</div>
+        <div class="sc-key">Объявлений</div>
+      </div>
+      <div class="stat-card" onclick="haptic('medium');toast('💰','₽842K оборот')">
+        <div class="sc-icon">💰</div>
+        <div class="sc-val">₽842K</div>
+        <div class="sc-key">Оборот</div>
+      </div>
+      <div class="stat-card" onclick="haptic('medium');toast('📊','Отчёт готов')">
+        <div class="sc-icon">📊</div>
+        <div class="sc-val">94%</div>
+        <div class="sc-key">Довольных</div>
+      </div>
+    </div>
+
+    <div id="adminRoleSection">
+      <div class="flex-between">
+        <div class="sec-label">Права доступа (демо)</div>
+      </div>
+      <div class="chips-row" id="roleChips">
+        <div class="chip" data-role="user"      onclick="setRole('user',this)">👤 Пользователь</div>
+        <div class="chip" data-role="moderator" onclick="setRole('moderator',this)">🛡️ Модератор</div>
+        <div class="chip on" data-role="owner"  onclick="setRole('owner',this)">👑 Владелец</div>
+      </div>
+    </div>
+
+    <div class="flex-between" style="margin-top:8px">
+      <div class="sec-label">Пользователи</div>
+      <div class="view-all">Все →</div>
+    </div>
+    <div id="adminUserList"></div>
+  </div>
+
+  <!-- ══════ PAGE: PROFILE ══════ -->
+  <div class="page" id="pg-profile">
+    <div class="profile-hero">
+      <div class="p-avatar-wrap">
+        <div class="p-avatar" id="pAvatar">А</div>
+        <div class="p-crown" id="pCrown">👑</div>
+      </div>
+      <div class="p-name" id="pName">Пользователь</div>
+      <div class="p-role-tag prt-owner" id="pRoleTag">👑 Владелец</div>
+      <div class="stats-grid">
+        <div class="stat-box"><div class="stat-val">24</div><div class="stat-key">Продаж</div></div>
+        <div class="stat-box"><div class="stat-val">₽48K</div><div class="stat-key">Заработано</div></div>
+        <div class="stat-box"><div class="stat-val">4.9⭐</div><div class="stat-key">Рейтинг</div></div>
+      </div>
+    </div>
+
+    <div class="settings-group">
+      <div class="settings-row" onclick="haptic('light');toast('✏️','Редактирование профиля')">
+        <span class="sr-icon">✏️</span><span class="sr-text">Редактировать профиль</span><span class="sr-arr">›</span>
+      </div>
+      <div class="settings-row" onclick="haptic('light');toast('🔔','Настройки уведомлений')">
+        <span class="sr-icon">🔔</span><span class="sr-text">Уведомления</span><span class="sr-arr">›</span>
+      </div>
+      <div class="settings-row" onclick="haptic('light');toast('💳','Платёжные данные')">
+        <span class="sr-icon">💳</span><span class="sr-text">Платёжные данные</span><span class="sr-arr">›</span>
+      </div>
+      <div class="settings-row" onclick="haptic('light');toast('🔒','Безопасность')">
+        <span class="sr-icon">🔒</span><span class="sr-text">Безопасность и пароль</span><span class="sr-arr">›</span>
+      </div>
+      <div class="settings-row" onclick="haptic('light');toast('📞','Поддержка')">
+        <span class="sr-icon">📞</span><span class="sr-text">Техническая поддержка</span><span class="sr-arr">›</span>
+      </div>
+      <div class="settings-row" onclick="haptic('medium');toast('👋','До свидания!')">
+        <span class="sr-icon">🚪</span><span class="sr-text sr-danger">Выйти из аккаунта</span><span class="sr-arr">›</span>
+      </div>
+    </div>
+
+    <div class="tg-username" id="tgUsernameDisplay" style="text-align:center;padding:8px">
+      @username · MarketX v1.0.0
+    </div>
+  </div>
+
+</div><!-- /app-scroll -->
+
+<!-- ═══════════ BOTTOM NAV ═══════════ -->
+<nav class="bottom-nav">
+  <button class="nav-btn on" id="nb-home" onclick="goPage('home')">
+    <span class="n-ico">🏪</span>
+    <span class="n-lbl">Магазин</span>
+  </button>
+  <button class="nav-btn" id="nb-listings" onclick="goPage('listings')" style="position:relative">
+    <span class="n-ico">📝</span>
+    <span class="n-lbl">Объявления</span>
+    <span class="nav-badge"></span>
+  </button>
+  <button class="nav-btn" id="nb-fav" onclick="goPage('fav')">
+    <span class="n-ico">♡</span>
+    <span class="n-lbl">Избранное</span>
+  </button>
+  <button class="nav-btn" id="nb-admin" onclick="goPage('admin')">
+    <span class="n-ico">⚙️</span>
+    <span class="n-lbl">Управление</span>
+  </button>
+  <button class="nav-btn" id="nb-profile" onclick="goPage('profile')">
+    <span class="n-ico">👤</span>
+    <span class="n-lbl">Профиль</span>
+  </button>
+</nav>
+
+<!-- ═══════════ ADD LISTING MODAL ═══════════ -->
+<div class="modal-bg" id="addModal" onclick="closeAddModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="modal-title">➕ Новое объявление</div>
+
+    <div class="form-block">
+      <span class="form-lbl">Выбери иконку</span>
+      <div class="emoji-grid" id="emojiGrid">
+        📱💻👟🎮📸🎧👗⌚🧴🏋️🛋️🎨🚗🎸📚🧸🎀🛒🔧💡
+      </div>
+    </div>
+    <div class="form-block">
+      <span class="form-lbl">Название</span>
+      <input class="form-ctrl" id="newName" placeholder="Название товара">
+    </div>
+    <div class="form-block">
+      <span class="form-lbl">Описание</span>
+      <textarea class="form-ctrl" id="newDesc" placeholder="Опишите состояние и особенности..."></textarea>
+    </div>
+    <div class="form-block">
+      <span class="form-lbl">Цена (₽)</span>
+      <input class="form-ctrl" id="newPrice" type="number" inputmode="numeric" placeholder="0">
+    </div>
+    <div class="form-block">
+      <span class="form-lbl">Категория</span>
+      <select class="form-ctrl" id="newCat">
+        <option value="electronics">📱 Электроника</option>
+        <option value="clothes">👗 Одежда</option>
+        <option value="games">🎮 Игры</option>
+        <option value="home">🏠 Дом</option>
+        <option value="sport">⚽ Спорт</option>
+        <option value="beauty">💄 Красота</option>
+      </select>
+    </div>
+    <button class="submit-btn" onclick="submitListing()">Опубликовать объявление</button>
+  </div>
+</div>
+
+<!-- ═══════════ PRODUCT DETAIL MODAL ═══════════ -->
+<div class="modal-bg" id="pdModal" onclick="closePdModal(event)">
+  <div class="modal-sheet">
+    <div class="modal-handle"></div>
+    <div class="pd-img" id="pd-img">📱</div>
+    <div class="pd-name" id="pd-name">Название</div>
+    <div class="pd-price" id="pd-price">₽0</div>
+    <div class="pd-seller" id="pd-seller">@seller</div>
+    <div class="pd-desc" id="pd-desc">Описание</div>
+    <button class="submit-btn" onclick="haptic('medium');toast('🛒','Товар добавлен в корзину!');closePdModal({target:document.getElementById('pdModal')})">
+      Купить / Написать продавцу
+    </button>
+  </div>
+</div>
+
+<!-- ═══════════════════════════════
+     JAVASCRIPT — TELEGRAM WEBAPP
+═══════════════════════════════ -->
+<script>
+/* ─── Telegram WebApp Init ─── */
+const tg = window.Telegram?.WebApp;
+
+if (tg) {
+  tg.ready();
+  tg.expand();                          // Раскрыть на весь экран
+  tg.enableClosingConfirmation();       // Спрашивать перед закрытием
+  tg.setHeaderColor('#17212b');
+  tg.setBackgroundColor('#17212b');
+}
+
+/* ─── Haptic Feedback (нативный ТГ) ─── */
+function haptic(type = 'light') {
+  tg?.HapticFeedback?.impactOccurred(type);
+}
+function hapticNotify(type = 'success') {
+  tg?.HapticFeedback?.notificationOccurred(type);
+}
+
+/* ─── User Data из Telegram ─── */
+const tgUser = tg?.initDataUnsafe?.user;
+const userName   = tgUser?.first_name  ?? 'Пользователь';
+const userHandle = tgUser?.username    ?? 'username';
+const userPhoto  = tgUser?.photo_url   ?? null;
+const userId     = tgUser?.id          ?? 0;
+
+/* ─── Роли (в продакшене берутся с сервера по userId) ─── */
+const ROLES = { owner: 'owner', moderator: 'moderator', user: 'user' };
+let currentRole = 'owner'; // Default demo = owner
+
+/* ─── Данные ─── */
+const PRODUCTS = [
+  {id:1, e:'📱', name:'iPhone 14 Pro 256GB',    price:89900, cat:'electronics', seller:'@tech_store',   badge:'hot',  desc:'Космический чёрный, полный комплект, гарантия 6 мес.'},
+  {id:2, e:'👟', name:'Nike Air Max 95 OG',      price:12500, cat:'clothes',     seller:'@sneaker_ru',   badge:'new',  desc:'Размер 42, состояние 9/10, оригинал.'},
+  {id:3, e:'🎮', name:'DualSense PS5 White',     price:7200,  cat:'games',       seller:'@games_shop',   badge:'',     desc:'Новый в упаковке, не вскрывался.'},
+  {id:4, e:'🎧', name:'AirPods Pro 2 MagSafe',   price:24990, cat:'electronics', seller:'@apple_fan',    badge:'hot',  desc:'Куплены 3 месяца назад, чехол в комплекте.'},
+  {id:5, e:'⌚', name:'Apple Watch Series 9',    price:32900, cat:'electronics', seller:'@apple_fan',    badge:'',     desc:'45mm, Midnight, новый, не активирован.'},
+  {id:6, e:'👗', name:'Пуховик Canada Goose',    price:48750, cat:'clothes',     seller:'@fashion_msk',  badge:'new',  desc:'Размер M, оригинал, покупали в официальном магазине.'},
+  {id:7, e:'🛋️', name:'Кресло Herman Miller',   price:89400, cat:'home',        seller:'@mebel_pro',    badge:'sale', desc:'Почти новое, использовалось 2 месяца.'},
+  {id:8, e:'🏋️', name:'Штанга олимпийская 20кг',price:15600, cat:'sport',       seller:'@sportlife_ru', badge:'sale', desc:'Полный комплект дисков, гриф 2.2м.'},
+  {id:9, e:'💄', name:'Палетка MAC 24 тени',     price:5800,  cat:'beauty',      seller:'@beauty_box',   badge:'',     desc:'Оригинал, использована 2 раза.'},
+  {id:10,e:'📸', name:'Sony ZV-E10 + объектив',  price:54000, cat:'electronics', seller:'@photo_shop',   badge:'',     desc:'Kit 16-50mm, полный комплект, пробег 2k кадров.'},
+];
+
+const MY_LISTINGS = [
+  {id:1, e:'💻', name:'MacBook Air M2',            desc:'8/256GB, Silver, идеал',            price:85000, status:'active'},
+  {id:2, e:'📸', name:'Canon EOS M50 Mark II',     desc:'Kit 15-45mm, пробег 5k кадров',     price:32000, status:'sold'},
+  {id:3, e:'🎧', name:'Sony WH-1000XM5',           desc:'NC беспроводные, есть чехол',       price:22500, status:'pending'},
+];
+
+const ADMIN_USERS = [
+  {init:'М', name:'Мария Смирнова',   tg:'@masha_s',   role:'moderator', color:'#8b5cf6'},
+  {init:'Д', name:'Дмитрий Кузнецов', tg:'@dima_k',    role:'user',      color:'#10b981'},
+  {init:'Е', name:'Елена Попова',     tg:'@elena_p',   role:'moderator', color:'#f59e0b'},
+  {init:'И', name:'Иван Соколов',     tg:'@ivan_sokol', role:'user',     color:'#3b82f6'},
+  {init:'О', name:'Ольга Новикова',   tg:'@olga_n',    role:'user',      color:'#f43f5e'},
+];
+
+let favorites = new Set();
+let selectedEmoji = '📱';
+let activeCat = 'all';
+
+/* ─── INIT ─── */
+function init() {
+  // Применяем данные пользователя из Telegram
+  document.getElementById('tg-name').textContent = userName;
+  document.getElementById('pName').textContent = userName + ' ' + (tgUser?.last_name ?? '');
+  document.getElementById('tgUsernameDisplay').textContent = `@${userHandle} · MarketX v1.0.0`;
+
+  const initials = userName.charAt(0).toUpperCase();
+  document.getElementById('pAvatar').textContent = initials;
+
+  if (userPhoto) {
+    const img = document.createElement('img');
+    img.src = userPhoto;
+    document.getElementById('pAvatar').innerHTML = '';
+    document.getElementById('pAvatar').appendChild(img);
+  }
+
+  buildEmojiGrid();
+  renderProducts(PRODUCTS);
+  renderMyListings();
+  renderAdminUsers();
+  updateRoleUI();
+}
+
+/* ─── NAVIGATION ─── */
+const PAGES = ['home','listings','fav','admin','profile'];
+function goPage(id) {
+  haptic('light');
+  PAGES.forEach(p => {
+    document.getElementById('pg-'+p).classList.toggle('active', p===id);
+    document.getElementById('nb-'+p).classList.toggle('on', p===id);
+  });
+  document.getElementById('appScroll').scrollTo(0,0);
+
+  if (id === 'fav')     renderFavPage();
+  if (id === 'profile') updateProfileUI();
+
+  // Telegram MainButton
+  if (id === 'listings') {
+    tg?.MainButton?.setText('➕ Добавить объявление');
+    tg?.MainButton?.onClick(openAddModal);
+    tg?.MainButton?.show();
+  } else {
+    tg?.MainButton?.hide();
+  }
+}
+
+/* ─── PRODUCTS ─── */
+function renderProducts(list) {
+  const g = document.getElementById('productGrid');
+  if (!list.length) {
+    g.innerHTML = `<div style="grid-column:1/-1;text-align:center;color:var(--tg-hint);padding:40px 0;font-size:14px">Ничего не найдено 😔</div>`;
+    return;
+  }
+  g.innerHTML = list.map((p,i) => `
+    <div class="prod-card" style="animation-delay:${i*0.04}s" onclick="openProduct(${p.id})">
+      <div class="prod-img">
+        ${p.e}
+        ${p.badge ? `<div class="prod-badge pb-${p.badge}">${p.badge==='hot'?'🔥 Хит':p.badge==='new'?'✨ Новый':'💥 Скидка'}</div>` : ''}
+        <button class="fav-ico ${favorites.has(p.id)?'on':''}" id="fico${p.id}"
+          onclick="event.stopPropagation();toggleFav(${p.id})">
+          ${favorites.has(p.id)?'❤️':'🤍'}
+        </button>
+      </div>
+      <div class="prod-body">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-bottom">
+          <div class="prod-price">₽${p.price.toLocaleString()}</div>
+          <button class="buy-btn-mini" onclick="event.stopPropagation();haptic('medium');toast('🛒','Добавлено в корзину')">+</button>
+        </div>
+        <div class="prod-seller">${p.seller}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function searchProducts(q) {
+  const filtered = PRODUCTS.filter(p =>
+    p.name.toLowerCase().includes(q.toLowerCase()) &&
+    (activeCat==='all' || p.cat===activeCat)
+  );
+  renderProducts(filtered);
+}
+
+function filterChip(cat) {
+  activeCat = cat;
+  document.querySelectorAll('#chipsRow .chip').forEach(c => {
+    c.classList.toggle('on', c.dataset.cat===cat);
+  });
+  document.getElementById('searchInp').value = '';
+  renderProducts(cat==='all' ? PRODUCTS : PRODUCTS.filter(p=>p.cat===cat));
+  haptic('light');
+}
+
+function openProduct(id) {
+  haptic('light');
+  const p = PRODUCTS.find(x=>x.id===id);
+  if (!p) return;
+  document.getElementById('pd-img').textContent    = p.e;
+  document.getElementById('pd-name').textContent   = p.name;
+  document.getElementById('pd-price').textContent  = `₽${p.price.toLocaleString()}`;
+  document.getElementById('pd-seller').textContent = p.seller;
+  document.getElementById('pd-desc').textContent   = p.desc;
+  document.getElementById('pdModal').classList.add('open');
+}
+function closePdModal(e) {
+  if(e.target===document.getElementById('pdModal'))
+    document.getElementById('pdModal').classList.remove('open');
+}
+
+/* ─── FAVORITES ─── */
+function toggleFav(id) {
+  haptic('medium');
+  if (favorites.has(id)) {
+    favorites.delete(id);
+    hapticNotify('warning');
+    toast('💔','Убрано из избранного');
+  } else {
+    favorites.add(id);
+    hapticNotify('success');
+    toast('❤️','Добавлено в избранное');
+  }
+  const btn = document.getElementById('fico'+id);
+  if (btn) { btn.classList.toggle('on', favorites.has(id)); btn.textContent = favorites.has(id)?'❤️':'🤍'; }
+}
+
+function renderFavPage() {
+  const favList = PRODUCTS.filter(p=>favorites.has(p.id));
+  const grid  = document.getElementById('favGrid');
+  const empty = document.getElementById('favEmpty');
+  if (!favList.length) { grid.innerHTML=''; empty.style.display='flex'; return; }
+  empty.style.display = 'none';
+  grid.innerHTML = favList.map(p => `
+    <div class="prod-card" onclick="openProduct(${p.id})">
+      <div class="prod-img">
+        ${p.e}
+        <button class="fav-ico on" onclick="event.stopPropagation();toggleFav(${p.id});renderFavPage()">❤️</button>
+      </div>
+      <div class="prod-body">
+        <div class="prod-name">${p.name}</div>
+        <div class="prod-bottom">
+          <div class="prod-price">₽${p.price.toLocaleString()}</div>
+        </div>
+        <div class="prod-seller">${p.seller}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ─── MY LISTINGS ─── */
+function renderMyListings() {
+  const wrap = document.getElementById('myListingsWrap');
+  wrap.innerHTML = MY_LISTINGS.map(l => `
+    <div class="listing-item" onclick="haptic('light');toast('📄','${l.name.replace(/'/g,'')}')">
+      <div class="li-emoji">${l.e}</div>
+      <div class="li-info">
+        <div class="li-name">${l.name}</div>
+        <div class="li-desc">${l.desc}</div>
+        <div class="li-row">
+          <div class="li-price">₽${l.price.toLocaleString()}</div>
+          <div class="status-chip ${l.status==='active'?'s-active':l.status==='sold'?'s-sold':'s-pending'}">
+            ${l.status==='active'?'✓ Активно':l.status==='sold'?'✗ Продано':'⏳ На проверке'}
+          </div>
+        </div>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ─── ADD LISTING MODAL ─── */
+const EMOJIS = ['📱','💻','👟','🎮','📸','🎧','👗','⌚','🧴','🏋️','🛋️','🎨','🚗','🎸','📚','🧸','🎀','🛒','🔧','💡'];
+
+function buildEmojiGrid() {
+  const g = document.getElementById('emojiGrid');
+  g.innerHTML = EMOJIS.map((em,i) => `
+    <div class="ej-opt ${i===0?'sel':''}" onclick="selectEmoji(this,'${em}')">${em}</div>
+  `).join('');
+}
+
+function selectEmoji(el, em) {
+  haptic('light');
+  document.querySelectorAll('.ej-opt').forEach(o=>o.classList.remove('sel'));
+  el.classList.add('sel');
+  selectedEmoji = em;
+}
+
+function openAddModal() {
+  haptic('light');
+  document.getElementById('addModal').classList.add('open');
+}
+function closeAddModal(e) {
+  if(e.target===document.getElementById('addModal'))
+    document.getElementById('addModal').classList.remove('open');
+}
+
+function submitListing() {
+  const name  = document.getElementById('newName').value.trim();
+  const price = document.getElementById('newPrice').value.trim();
+  const desc  = document.getElementById('newDesc').value.trim() || 'Нет описания';
+  if (!name || !price) {
+    hapticNotify('error');
+    toast('⚠️','Заполните название и цену');
+    return;
+  }
+  MY_LISTINGS.unshift({
+    id: Date.now(), e: selectedEmoji,
+    name, desc, price: parseInt(price), status: 'pending'
+  });
+  renderMyListings();
+  document.getElementById('addModal').classList.remove('open');
+  document.getElementById('newName').value  = '';
+  document.getElementById('newDesc').value  = '';
+  document.getElementById('newPrice').value = '';
+  hapticNotify('success');
+  toast('🎉','Объявление отправлено на модерацию!');
+}
+
+/* ─── ROLE SYSTEM ─── */
+function setRole(role, el) {
+  haptic('medium');
+  currentRole = role;
+  document.querySelectorAll('#roleChips .chip').forEach(c=>c.classList.toggle('on', c.dataset.role===role));
+  updateRoleUI();
+  toast('🔄', `Роль: ${role==='owner'?'Владелец':role==='moderator'?'Модератор':'Пользователь'}`);
+}
+
+function updateRoleUI() {
+  const pill   = document.getElementById('rolePill');
+  const pBadge = document.getElementById('pRoleTag');
+  const pCrown = document.getElementById('pCrown');
+  const adminNb = document.getElementById('nb-admin');
+
+  const roleMap = {
+    owner:     { pill:'rp-owner',  prt:'prt-owner',  label:'👑 Владелец',   crown:'👑',  showAdmin: true },
+    moderator: { pill:'rp-mod',    prt:'prt-mod',     label:'🛡️ Модератор', crown:'🛡️', showAdmin: true },
+    user:      { pill:'rp-user',   prt:'prt-user',    label:'👤 Пользователь',crown:'',  showAdmin: false },
+  };
+  const r = roleMap[currentRole];
+  pill.className   = `role-pill ${r.pill}`;
+  pill.textContent = r.label;
+  pBadge.className = `p-role-tag ${r.prt}`;
+  pBadge.textContent = r.label;
+  pCrown.textContent = r.crown;
+  pCrown.style.display = r.crown ? '' : 'none';
+  adminNb.style.display = r.showAdmin ? '' : 'none';
+
+  // Telegram тема кнопки навбара
+  tg?.MainButton?.setParams({ color: '#3b82f6', text_color: '#ffffff' });
+}
+
+function updateProfileUI() {
+  const initials = userName.charAt(0).toUpperCase();
+  if (!userPhoto) document.getElementById('pAvatar').textContent = initials;
+}
+
+/* ─── ADMIN USERS ─── */
+function renderAdminUsers() {
+  const c = document.getElementById('adminUserList');
+  c.innerHTML = ADMIN_USERS.map(u => `
+    <div class="user-row">
+      <div class="ur-av" style="background:${u.color}22;color:${u.color}">${u.init}</div>
+      <div>
+        <div class="ur-name">${u.name}</div>
+        <div class="ur-role" style="color:${u.role==='moderator'?'#8b5cf6':'var(--tg-hint)'}">
+          ${u.role==='moderator'?'🛡️ Модератор':'👤 Пользователь'}
+        </div>
+        <div class="tg-username">${u.tg}</div>
+      </div>
+      <div class="ur-btns">
+        ${currentRole==='owner'?`<button class="ur-btn urb-m" onclick="haptic('medium');toast('🛡️','Роль изменена')">Роль</button>`:''}
+        <button class="ur-btn urb-w" onclick="haptic('medium');toast('⚠️','Предупреждение отправлено')">Warn</button>
+        <button class="ur-btn urb-b" onclick="haptic('medium');toast('🚫','Пользователь заблокирован')">Ban</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+/* ─── TOAST ─── */
+let toastTimer;
+function toast(icon, text) {
+  clearTimeout(toastTimer);
+  document.getElementById('t-ico').textContent = icon;
+  document.getElementById('t-txt').textContent = text;
+  const t = document.getElementById('toast');
+  t.classList.add('show');
+  toastTimer = setTimeout(()=>t.classList.remove('show'), 2500);
+}
+
+/* ─── Telegram BackButton handling ─── */
+tg?.BackButton?.onClick(() => {
+  // Закрываем модалки если открыты
+  if (document.getElementById('addModal').classList.contains('open')) {
+    document.getElementById('addModal').classList.remove('open');
+    return;
+  }
+  if (document.getElementById('pdModal').classList.contains('open')) {
+    document.getElementById('pdModal').classList.remove('open');
+    return;
+  }
+  tg.BackButton.hide();
+  goPage('home');
+});
+
+/* ─── GO! ─── */
+init();
+</script>
+</body>
+</html>
