@@ -1,0 +1,10 @@
+title: MarketX
+description: Telegram Mini App Marketplace
+theme: null
+plugins: []
+
+# Отключаем Jekyll обработку — раздаём файлы как есть
+exclude:
+  - "*.py"
+  - "README.md"
+  - ".gitignore"

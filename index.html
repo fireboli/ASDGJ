@@ -1,0 +1,547 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#17212b">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="manifest" href="manifest.json">
+<title>MarketX</title>
+
+<!-- Официальный Telegram WebApp SDK -->
+<script src="https://telegram.org/js/telegram-web-app.js"></script>
+
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Unbounded:wght@700;900&family=Geologica:wght@400;500;600;700&display=swap');
+
+:root {
+  --bg:     var(--tg-theme-bg-color,           #17212b);
+  --sec:    var(--tg-theme-secondary-bg-color, #232e3c);
+  --text:   var(--tg-theme-text-color,         #f0f0f0);
+  --hint:   var(--tg-theme-hint-color,         #708499);
+  --btn:    var(--tg-theme-button-color,       #3b82f6);
+  --blue:   #3b82f6;
+  --red:    #f43f5e;
+  --green:  #10b981;
+  --gold:   #f59e0b;
+  --purple: #8b5cf6;
+  --border: rgba(255,255,255,.07);
+  --card:   rgba(255,255,255,.04);
+  --nav-h:  62px;
+  --safe-b: env(safe-area-inset-bottom,0px);
+  --r:      18px;
+}
+*,*::before,*::after{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html{height:100%;overflow:hidden}
+body{height:100%;width:100%;font-family:'Geologica',system-ui,sans-serif;background:var(--bg);color:var(--text);overflow:hidden;position:fixed;top:0;left:0}
+body::before{content:'';position:fixed;inset:0;pointer-events:none;z-index:0;background:radial-gradient(ellipse 80% 50% at 15% -5%,rgba(59,130,246,.13) 0%,transparent 60%),radial-gradient(ellipse 60% 40% at 85% 105%,rgba(244,63,94,.09) 0%,transparent 60%)}
+
+#scroll{position:fixed;top:0;left:0;right:0;bottom:calc(var(--nav-h) + var(--safe-b));overflow-y:auto;overflow-x:hidden;-webkit-overflow-scrolling:touch}
+#scroll::-webkit-scrollbar{display:none}
+
+.page{display:none;padding:16px 16px 24px;min-height:100%;position:relative;z-index:1;animation:pgIn .2s ease}
+.page.on{display:block}
+@keyframes pgIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+
+.t-h1{font-family:'Unbounded',sans-serif;font-size:21px;font-weight:900;letter-spacing:-.5px;margin-bottom:3px}
+.t-sub{font-size:13px;color:var(--hint);margin-bottom:18px}
+.t-lbl{font-family:'Unbounded',sans-serif;font-size:10px;font-weight:700;color:var(--hint);text-transform:uppercase;letter-spacing:1.2px;margin-bottom:10px}
+.row-bw{display:flex;align-items:center;justify-content:space-between;margin-bottom:12px}
+.link-more{font-size:12px;color:var(--blue);font-weight:600;cursor:pointer}
+
+/* HOME */
+.home-bar{display:flex;align-items:center;justify-content:space-between;margin-bottom:18px}
+.g-label{font-size:11px;color:var(--hint)}
+.g-name{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900}
+.role-tag{display:inline-flex;align-items:center;gap:5px;padding:6px 13px;border-radius:20px;font-size:11px;font-weight:700;border:1px solid transparent;cursor:pointer;transition:transform .15s,opacity .15s}
+.role-tag:active{transform:scale(.93);opacity:.8}
+.rt-own{background:rgba(245,158,11,.14);color:var(--gold);border-color:rgba(245,158,11,.3)}
+.rt-mod{background:rgba(139,92,246,.14);color:var(--purple);border-color:rgba(139,92,246,.3)}
+.rt-usr{background:rgba(112,132,153,.14);color:var(--hint);border-color:var(--border)}
+
+.hero{background:linear-gradient(135deg,#1d4ed8,#3b82f6 55%,#0ea5e9);border-radius:22px;padding:20px;margin-bottom:18px;position:relative;overflow:hidden}
+.hero::before,.hero::after{content:'';position:absolute;border-radius:50%;background:rgba(255,255,255,.08)}
+.hero::before{width:110px;height:110px;right:-15px;top:-25px}
+.hero::after{width:70px;height:70px;right:35px;bottom:-22px}
+.h-tag{display:inline-block;background:rgba(255,255,255,.2);border-radius:8px;padding:3px 10px;font-size:11px;font-weight:600;margin-bottom:8px}
+.h-title{font-family:'Unbounded',sans-serif;font-size:17px;font-weight:900;margin-bottom:4px;line-height:1.35}
+.h-sub{font-size:12px;opacity:.82;margin-bottom:14px}
+.h-cta{display:inline-flex;align-items:center;gap:6px;background:#fff;color:#1d4ed8;border:none;border-radius:12px;padding:9px 18px;font-size:12px;font-weight:700;font-family:'Geologica',sans-serif;cursor:pointer;box-shadow:0 4px 16px rgba(0,0,0,.25);transition:transform .15s}
+.h-cta:active{transform:scale(.94)}
+
+.srch-wrap{position:relative;margin-bottom:14px}
+.srch-ico{position:absolute;left:14px;top:50%;transform:translateY(-50%);font-size:15px;color:var(--hint);pointer-events:none}
+.srch-inp{width:100%;background:var(--sec);border:1px solid var(--border);border-radius:14px;padding:12px 16px 12px 42px;color:var(--text);font-family:'Geologica',sans-serif;font-size:14px;outline:none;transition:border-color .2s;-webkit-appearance:none}
+.srch-inp:focus{border-color:rgba(59,130,246,.5)}
+.srch-inp::placeholder{color:var(--hint)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:2px;margin-bottom:16px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chip{flex-shrink:0;padding:7px 13px;border-radius:20px;font-size:12px;font-weight:600;border:1px solid var(--border);background:var(--sec);color:var(--hint);cursor:pointer;white-space:nowrap;transition:all .17s;user-select:none}
+.chip.on{background:var(--blue);border-color:var(--blue);color:#fff}
+.chip:active{transform:scale(.92)}
+
+.pgrid{display:grid;grid-template-columns:repeat(2,1fr);gap:12px}
+.pcard{background:var(--sec);border:1px solid var(--border);border-radius:var(--r);overflow:hidden;cursor:pointer;position:relative;transition:transform .18s;animation:cardIn .3s ease both}
+.pcard:active{transform:scale(.96)}
+@keyframes cardIn{from{opacity:0;transform:scale(.94)}to{opacity:1;transform:scale(1)}}
+.pimg{width:100%;height:130px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:52px;position:relative}
+.pbdg{position:absolute;top:8px;right:8px;padding:2px 8px;border-radius:6px;font-size:10px;font-weight:700}
+.bh{background:var(--red);color:#fff}.bn{background:var(--green);color:#fff}.bs{background:var(--gold);color:#000}
+.fbtn{position:absolute;top:8px;left:8px;width:30px;height:30px;border-radius:50%;background:rgba(0,0,0,.35);backdrop-filter:blur(8px);border:none;font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .18s}
+.fbtn:active{transform:scale(1.28)}
+.pbody{padding:11px 12px}
+.pname{font-size:13px;font-weight:600;line-height:1.3;margin-bottom:7px}
+.pfoot{display:flex;align-items:center;justify-content:space-between}
+.pprice{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:var(--blue)}
+.cbtn{width:28px;height:28px;border-radius:8px;background:var(--blue);border:none;color:#fff;font-size:18px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:transform .15s}
+.cbtn:active{transform:scale(.85)}
+.pseller{font-size:10px;color:var(--hint);margin-top:4px}
+
+/* LISTINGS */
+.add-btn{width:100%;border:2px dashed rgba(59,130,246,.4);background:rgba(59,130,246,.06);border-radius:16px;padding:16px;display:flex;align-items:center;justify-content:center;gap:8px;color:var(--blue);font-weight:700;font-size:14px;font-family:'Geologica',sans-serif;cursor:pointer;margin-bottom:16px;transition:all .2s}
+.add-btn:active{transform:scale(.98);background:rgba(59,130,246,.12)}
+.li{background:var(--sec);border:1px solid var(--border);border-radius:16px;padding:14px;display:flex;gap:12px;align-items:center;margin-bottom:10px;cursor:pointer;transition:transform .18s}
+.li:active{transform:scale(.98)}
+.li-ico{width:54px;height:54px;border-radius:14px;background:var(--card);display:flex;align-items:center;justify-content:center;font-size:28px;flex-shrink:0}
+.li-name{font-size:14px;font-weight:600;margin-bottom:3px}
+.li-desc{font-size:12px;color:var(--hint);white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:180px}
+.li-row{display:flex;align-items:center;justify-content:space-between;margin-top:7px}
+.li-price{font-family:'Unbounded',sans-serif;font-size:13px;font-weight:900;color:var(--blue)}
+.sc{font-size:10px;font-weight:700;padding:3px 9px;border-radius:7px}
+.sa{background:rgba(16,185,129,.15);color:var(--green)}.ss{background:rgba(244,63,94,.15);color:var(--red)}.sp{background:rgba(245,158,11,.15);color:var(--gold)}
+
+/* FAV */
+.empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:70px 20px;text-align:center}
+.empty-e{font-size:64px;margin-bottom:14px}
+.empty-h{font-family:'Unbounded',sans-serif;font-size:16px;font-weight:900;margin-bottom:6px}
+.empty-p{font-size:13px;color:var(--hint)}
+
+/* ADMIN */
+.adm-hero{background:linear-gradient(135deg,rgba(245,158,11,.14),rgba(59,130,246,.1));border:1px solid rgba(245,158,11,.25);border-radius:20px;padding:18px;display:flex;align-items:center;gap:14px;margin-bottom:18px}
+.adm-ico{font-size:40px}
+.adm-title{font-family:'Unbounded',sans-serif;font-size:14px;font-weight:900;color:var(--gold);margin-bottom:3px}
+.adm-sub{font-size:12px;color:var(--hint)}
+.s4{display:grid;grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:18px}
+.scard{background:var(--sec);border:1px solid var(--border);border-radius:16px;padding:16px;text-align:center;cursor:pointer;transition:transform .15s}
+.scard:active{transform:scale(.95)}
+.sc-ico{font-size:26px;margin-bottom:6px}
+.sc-val{font-family:'Unbounded',sans-serif;font-size:19px;font-weight:900;margin-bottom:2px}
+.sc-key{font-size:11px;color:var(--hint)}
+.urow{background:var(--sec);border:1px solid var(--border);border-radius:14px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:8px;transition:transform .15s}
+.urow:active{transform:scale(.98)}
+.uav{width:42px;height:42px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:15px;font-weight:900;flex-shrink:0}
+.un{font-size:13px;font-weight:600}
+.ur{font-size:11px;margin-top:2px}
+.utg{font-size:10px;color:var(--hint)}
+.ubtns{margin-left:auto;display:flex;gap:6px;flex-shrink:0}
+.ubtn{padding:5px 9px;border-radius:8px;font-size:11px;font-weight:700;border:none;cursor:pointer;font-family:'Geologica',sans-serif;transition:transform .15s}
+.ubtn:active{transform:scale(.88)}
+.uw{background:rgba(245,158,11,.15);color:var(--gold)}.ub{background:rgba(244,63,94,.15);color:var(--red)}.um{background:rgba(139,92,246,.15);color:var(--purple)}
+
+/* PROFILE */
+.prf{background:var(--sec);border:1px solid var(--border);border-radius:22px;padding:22px;text-align:center;margin-bottom:16px;position:relative;overflow:hidden}
+.prf::before{content:'';position:absolute;top:0;left:0;right:0;height:68px;background:linear-gradient(135deg,rgba(59,130,246,.2),rgba(244,63,94,.1))}
+.pav-w{position:relative;display:inline-block;margin-bottom:12px}
+.pav{width:76px;height:76px;border-radius:50%;background:linear-gradient(135deg,#3b82f6,#f43f5e);display:flex;align-items:center;justify-content:center;font-family:'Unbounded',sans-serif;font-size:26px;font-weight:900;border:3px solid var(--bg);overflow:hidden;position:relative;z-index:1}
+.pav img{width:100%;height:100%;object-fit:cover}
+.pcrn{position:absolute;top:-6px;right:-4px;font-size:20px;z-index:2}
+.pn{font-family:'Unbounded',sans-serif;font-size:17px;font-weight:900;margin-bottom:6px}
+.prt{display:inline-flex;align-items:center;gap:5px;padding:5px 16px;border-radius:20px;font-size:12px;font-weight:700;margin-bottom:16px;border:1px solid transparent}
+.pro{background:rgba(245,158,11,.14);color:var(--gold);border-color:rgba(245,158,11,.3)}
+.prm{background:rgba(139,92,246,.14);color:var(--purple);border-color:rgba(139,92,246,.3)}
+.pru{background:rgba(112,132,153,.14);color:var(--hint);border-color:var(--border)}
+.strow{display:grid;grid-template-columns:repeat(3,1fr);gap:1px;background:var(--border);border-radius:14px;overflow:hidden}
+.stc{background:var(--bg);padding:12px 6px;text-align:center}
+.stv{font-family:'Unbounded',sans-serif;font-size:15px;font-weight:900;color:var(--blue)}
+.stk{font-size:10px;color:var(--hint);margin-top:2px}
+.setl{display:flex;flex-direction:column;gap:8px;margin-bottom:16px}
+.setr{background:var(--sec);border:1px solid var(--border);border-radius:14px;padding:14px 16px;display:flex;align-items:center;gap:12px;cursor:pointer;transition:transform .15s}
+.setr:active{transform:scale(.98)}
+.si{font-size:20px;width:32px;text-align:center}
+.st_{flex:1;font-size:14px;font-weight:500}
+.sa_{color:var(--hint);font-size:18px}
+.sred{color:var(--red)}
+.pver{text-align:center;font-size:11px;color:var(--hint);padding:6px}
+
+/* NAV */
+#nav{position:fixed;bottom:0;left:0;right:0;height:calc(var(--nav-h) + var(--safe-b));padding-bottom:var(--safe-b);background:rgba(23,33,43,.93);backdrop-filter:blur(28px) saturate(1.5);-webkit-backdrop-filter:blur(28px) saturate(1.5);border-top:1px solid var(--border);display:flex;z-index:100}
+.nb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:3px;background:none;border:none;color:var(--hint);cursor:pointer;position:relative;transition:color .2s}
+.nb.on{color:var(--blue)}
+.nb-i{font-size:23px;transition:transform .2s;display:block}
+.nb.on .nb-i{transform:scale(1.15)}
+.nb-l{font-size:10px;font-weight:600}
+.nb-dot{position:absolute;top:6px;right:calc(50% - 16px);width:7px;height:7px;border-radius:50%;background:var(--red);border:2px solid var(--bg)}
+.nb.on::after{content:'';position:absolute;bottom:-1px;width:26px;height:2px;background:var(--blue);border-radius:2px 2px 0 0}
+
+/* MODAL */
+.mo{position:fixed;inset:0;z-index:200;background:rgba(0,0,0,.65);backdrop-filter:blur(5px);display:none;align-items:flex-end}
+.mo.on{display:flex}
+.ms{width:100%;max-height:92vh;background:var(--sec);border-radius:22px 22px 0 0;overflow-y:auto;padding:0 18px 36px;animation:sUp .27s cubic-bezier(.32,1.2,.64,1)}
+.ms::-webkit-scrollbar{display:none}
+@keyframes sUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.mh{width:38px;height:4px;border-radius:2px;background:var(--border);margin:14px auto 18px}
+.mt{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;margin-bottom:18px}
+.fb{margin-bottom:14px}
+.fl{font-size:11px;font-weight:700;color:var(--hint);text-transform:uppercase;letter-spacing:.8px;margin-bottom:7px;display:block}
+.fc{width:100%;background:var(--bg);border:1px solid var(--border);border-radius:13px;padding:13px 15px;color:var(--text);font-family:'Geologica',sans-serif;font-size:14px;outline:none;transition:border-color .2s;-webkit-appearance:none;appearance:none}
+.fc:focus{border-color:rgba(59,130,246,.5)}
+.fc::placeholder{color:var(--hint)}
+textarea.fc{resize:none;min-height:78px}
+.egrid{display:grid;grid-template-columns:repeat(6,1fr);gap:8px}
+.ej{aspect-ratio:1;border-radius:11px;background:var(--bg);border:2px solid transparent;display:flex;align-items:center;justify-content:center;font-size:26px;cursor:pointer;transition:border-color .15s,transform .15s}
+.ej.on{border-color:var(--blue)}
+.ej:active{transform:scale(.88)}
+.btn-p{width:100%;background:linear-gradient(135deg,#2563eb,#3b82f6);border:none;border-radius:15px;padding:16px;color:#fff;font-family:'Geologica',sans-serif;font-size:15px;font-weight:700;cursor:pointer;margin-top:8px;transition:transform .15s;box-shadow:0 4px 20px rgba(59,130,246,.35)}
+.btn-p:active{transform:scale(.97)}
+
+/* PRODUCT DETAIL */
+.pd-img{font-size:80px;text-align:center;padding:22px;background:var(--card);border-radius:16px;margin-bottom:16px}
+.pd-n{font-family:'Unbounded',sans-serif;font-size:18px;font-weight:900;margin-bottom:4px}
+.pd-p{font-family:'Unbounded',sans-serif;font-size:24px;font-weight:900;color:var(--blue);margin-bottom:5px}
+.pd-s{font-size:12px;color:var(--hint);margin-bottom:14px}
+.pd-d{font-size:14px;color:var(--hint);line-height:1.65;margin-bottom:22px}
+
+/* TOAST */
+#toast{position:fixed;top:14px;left:14px;right:14px;z-index:400;background:var(--sec);border:1px solid var(--border);border-radius:14px;padding:13px 16px;display:flex;align-items:center;gap:10px;box-shadow:0 8px 40px rgba(0,0,0,.45);transform:translateY(calc(-100% - 30px));transition:transform .3s cubic-bezier(.34,1.56,.64,1)}
+#toast.on{transform:translateY(0)}
+.tico{font-size:20px}
+.ttxt{font-size:13px;font-weight:500}
+</style>
+</head>
+<body>
+
+<div id="toast"><span class="tico" id="tIco">✅</span><span class="ttxt" id="tTxt">Готово</span></div>
+
+<div id="scroll">
+
+<!-- HOME -->
+<div class="page on" id="p-home">
+  <div class="home-bar">
+    <div><div class="g-label">Добро пожаловать,</div><div class="g-name" id="gName">Пользователь</div></div>
+    <div class="role-tag rt-own" id="rolePill" onclick="goPage('admin')">👑 Владелец</div>
+  </div>
+  <div class="hero">
+    <div class="h-tag">🔥 Акция дня</div>
+    <div class="h-title">Скидки до 60%<br>на топ товары</div>
+    <div class="h-sub">Только сегодня — лучшие предложения</div>
+    <button class="h-cta" onclick="hpt('light');doChip('all')">Смотреть →</button>
+  </div>
+  <div class="srch-wrap">
+    <span class="srch-ico">🔍</span>
+    <input class="srch-inp" id="sInp" placeholder="Поиск товаров…" oninput="doSearch(this.value)">
+  </div>
+  <div class="chips" id="chipRow">
+    <div class="chip on" data-c="all"        onclick="doChip('all')">Все</div>
+    <div class="chip"    data-c="electronics" onclick="doChip('electronics')">📱 Электроника</div>
+    <div class="chip"    data-c="clothes"     onclick="doChip('clothes')">👗 Одежда</div>
+    <div class="chip"    data-c="games"       onclick="doChip('games')">🎮 Игры</div>
+    <div class="chip"    data-c="home"        onclick="doChip('home')">🏠 Дом</div>
+    <div class="chip"    data-c="sport"       onclick="doChip('sport')">⚽ Спорт</div>
+    <div class="chip"    data-c="beauty"      onclick="doChip('beauty')">💄 Красота</div>
+  </div>
+  <div class="row-bw"><div class="t-lbl" style="margin:0">Каталог</div><div class="link-more">Все →</div></div>
+  <div class="pgrid" id="pGrid"></div>
+</div>
+
+<!-- LISTINGS -->
+<div class="page" id="p-listings">
+  <div class="t-h1">Мои объявления</div>
+  <div class="t-sub">Управляйте своими товарами</div>
+  <button class="add-btn" onclick="openAdd()">＋ Добавить объявление</button>
+  <div id="lstWrap"></div>
+</div>
+
+<!-- FAV -->
+<div class="page" id="p-fav">
+  <div class="t-h1">Избранное</div>
+  <div class="t-sub">Сохранённые товары</div>
+  <div class="pgrid" id="favGrid"></div>
+  <div class="empty" id="favEmpty">
+    <div class="empty-e">💫</div>
+    <div class="empty-h">Список пуст</div>
+    <div class="empty-p">Нажимай 🤍 на товарах, чтобы сохранить</div>
+  </div>
+</div>
+
+<!-- ADMIN -->
+<div class="page" id="p-admin">
+  <div class="adm-hero">
+    <div class="adm-ico">👑</div>
+    <div><div class="adm-title">Панель управления</div><div class="adm-sub">Полный доступ к платформе MarketX</div></div>
+  </div>
+  <div class="s4">
+    <div class="scard" onclick="hpt('medium');toast('👥','1 247 пользователей')"><div class="sc-ico">👥</div><div class="sc-val">1,247</div><div class="sc-key">Пользователей</div></div>
+    <div class="scard" onclick="hpt('medium');toast('📦','3 891 объявление')"><div class="sc-ico">📦</div><div class="sc-val">3,891</div><div class="sc-key">Объявлений</div></div>
+    <div class="scard" onclick="hpt('medium');toast('💰','Оборот ₽842K')"><div class="sc-ico">💰</div><div class="sc-val">₽842K</div><div class="sc-key">Оборот</div></div>
+    <div class="scard" onclick="hpt('medium');toast('📊','Отчёт готов')"><div class="sc-ico">📊</div><div class="sc-val">94%</div><div class="sc-key">Довольных</div></div>
+  </div>
+  <div class="row-bw"><div class="t-lbl" style="margin:0">Смена роли (демо)</div></div>
+  <div class="chips" id="roleChips" style="margin-bottom:18px">
+    <div class="chip"    data-r="user"      onclick="setRole('user',this)">👤 Пользователь</div>
+    <div class="chip"    data-r="moderator" onclick="setRole('moderator',this)">🛡️ Модератор</div>
+    <div class="chip on" data-r="owner"     onclick="setRole('owner',this)">👑 Владелец</div>
+  </div>
+  <div class="row-bw"><div class="t-lbl" style="margin:0">Пользователи</div><div class="link-more">Все →</div></div>
+  <div id="admUsers"></div>
+</div>
+
+<!-- PROFILE -->
+<div class="page" id="p-profile">
+  <div class="prf">
+    <div class="pav-w"><div class="pav" id="pAv">А</div><div class="pcrn" id="pCrn">👑</div></div>
+    <div class="pn" id="pName">Пользователь</div>
+    <div class="prt pro" id="pRt">👑 Владелец</div>
+    <div class="strow">
+      <div class="stc"><div class="stv">24</div><div class="stk">Продаж</div></div>
+      <div class="stc"><div class="stv">₽48K</div><div class="stk">Заработано</div></div>
+      <div class="stc"><div class="stv">4.9⭐</div><div class="stk">Рейтинг</div></div>
+    </div>
+  </div>
+  <div class="setl">
+    <div class="setr" onclick="hpt('light');toast('✏️','Редактировать профиль')"><span class="si">✏️</span><span class="st_">Редактировать профиль</span><span class="sa_">›</span></div>
+    <div class="setr" onclick="hpt('light');toast('🔔','Уведомления')"><span class="si">🔔</span><span class="st_">Уведомления</span><span class="sa_">›</span></div>
+    <div class="setr" onclick="hpt('light');toast('💳','Платёжные данные')"><span class="si">💳</span><span class="st_">Платёжные данные</span><span class="sa_">›</span></div>
+    <div class="setr" onclick="hpt('light');toast('🔒','Безопасность')"><span class="si">🔒</span><span class="st_">Безопасность</span><span class="sa_">›</span></div>
+    <div class="setr" onclick="hpt('light');toast('📞','Техподдержка')"><span class="si">📞</span><span class="st_">Техподдержка</span><span class="sa_">›</span></div>
+    <div class="setr" onclick="hpt('medium');toast('👋','До свидания!')"><span class="si">🚪</span><span class="st_ sred">Выйти</span><span class="sa_">›</span></div>
+  </div>
+  <div class="pver" id="pVer">@username · MarketX v1.0</div>
+</div>
+
+</div><!-- /scroll -->
+
+<!-- NAV -->
+<nav id="nav">
+  <button class="nb on" id="nb-home"     onclick="goPage('home')"><span class="nb-i">🏪</span><span class="nb-l">Магазин</span></button>
+  <button class="nb"    id="nb-listings" onclick="goPage('listings')" style="position:relative"><span class="nb-i">📝</span><span class="nb-l">Объявления</span><span class="nb-dot"></span></button>
+  <button class="nb"    id="nb-fav"      onclick="goPage('fav')"><span class="nb-i">🤍</span><span class="nb-l">Избранное</span></button>
+  <button class="nb"    id="nb-admin"    onclick="goPage('admin')"><span class="nb-i">⚙️</span><span class="nb-l">Управление</span></button>
+  <button class="nb"    id="nb-profile"  onclick="goPage('profile')"><span class="nb-i">👤</span><span class="nb-l">Профиль</span></button>
+</nav>
+
+<!-- ADD MODAL -->
+<div class="mo" id="mAdd" onclick="closeMo('mAdd',event)">
+  <div class="ms">
+    <div class="mh"></div>
+    <div class="mt">➕ Новое объявление</div>
+    <div class="fb"><span class="fl">Иконка товара</span><div class="egrid" id="ejGrid"></div></div>
+    <div class="fb"><span class="fl">Название</span><input class="fc" id="nName" placeholder="Название товара"></div>
+    <div class="fb"><span class="fl">Описание</span><textarea class="fc" id="nDesc" placeholder="Состояние, комплектация…"></textarea></div>
+    <div class="fb"><span class="fl">Цена (₽)</span><input class="fc" id="nPrice" type="number" inputmode="numeric" placeholder="0"></div>
+    <div class="fb"><span class="fl">Категория</span>
+      <select class="fc" id="nCat">
+        <option value="electronics">📱 Электроника</option>
+        <option value="clothes">👗 Одежда</option>
+        <option value="games">🎮 Игры</option>
+        <option value="home">🏠 Дом</option>
+        <option value="sport">⚽ Спорт</option>
+        <option value="beauty">💄 Красота</option>
+      </select>
+    </div>
+    <button class="btn-p" onclick="submitListing()">Опубликовать объявление</button>
+  </div>
+</div>
+
+<!-- PRODUCT DETAIL MODAL -->
+<div class="mo" id="mProd" onclick="closeMo('mProd',event)">
+  <div class="ms">
+    <div class="mh"></div>
+    <div class="pd-img" id="pdImg">📱</div>
+    <div class="pd-n"   id="pdName">Название</div>
+    <div class="pd-p"   id="pdPrice">₽0</div>
+    <div class="pd-s"   id="pdSeller">@seller</div>
+    <div class="pd-d"   id="pdDesc">Описание</div>
+    <button class="btn-p" onclick="hpt('medium');toast('🛒','Добавлено в корзину!');closeMo('mProd',{target:document.getElementById('mProd')})">
+      🛒 Купить / Написать продавцу
+    </button>
+  </div>
+</div>
+
+<script>
+'use strict';
+const tg=window.Telegram?.WebApp??null;
+if(tg){tg.ready();tg.expand();tg.enableClosingConfirmation();tg.setHeaderColor(tg.themeParams?.bg_color??'#17212b');tg.setBackgroundColor(tg.themeParams?.bg_color??'#17212b')}
+const hpt=t=>tg?.HapticFeedback?.impactOccurred(t);
+const hptn=t=>tg?.HapticFeedback?.notificationOccurred(t);
+const tgU=tg?.initDataUnsafe?.user??{};
+const uName=tgU.first_name??'Пользователь',uLast=tgU.last_name??'',uNick=tgU.username??'username',uPhoto=tgU.photo_url??null;
+
+const PRODUCTS=[
+  {id:1,e:'📱',name:'iPhone 14 Pro 256GB',price:89900,cat:'electronics',seller:'@tech_store',badge:'hot',desc:'Космический чёрный. Полный комплект, гарантия 6 мес.'},
+  {id:2,e:'👟',name:'Nike Air Max 95 OG',price:12500,cat:'clothes',seller:'@sneaker_ru',badge:'new',desc:'Размер 42 EU. Состояние 9/10. Оригинал.'},
+  {id:3,e:'🎮',name:'DualSense PS5 White',price:7200,cat:'games',seller:'@games_shop',badge:'',desc:'Новый в запечатанной упаковке.'},
+  {id:4,e:'🎧',name:'AirPods Pro 2 MagSafe',price:24990,cat:'electronics',seller:'@apple_fan',badge:'hot',desc:'Куплены 3 месяца назад. Оригинал Apple.'},
+  {id:5,e:'⌚',name:'Apple Watch Series 9',price:32900,cat:'electronics',seller:'@apple_fan',badge:'',desc:'45mm, Midnight. Новый, не активирован.'},
+  {id:6,e:'👗',name:'Пуховик Canada Goose',price:48750,cat:'clothes',seller:'@fashion_msk',badge:'new',desc:'Размер M, чёрный. Оригинал, есть чек.'},
+  {id:7,e:'🛋️',name:'Кресло Herman Miller',price:89400,cat:'home',seller:'@mebel_pro',badge:'sale',desc:'Размер C. Использовалось 2 месяца дома.'},
+  {id:8,e:'🏋️',name:'Штанга олимп. 60кг',price:15600,cat:'sport',seller:'@sportlife_ru',badge:'sale',desc:'Гриф 2.2м + диски. Производитель Torneo.'},
+  {id:9,e:'💄',name:'Палетка MAC 24 тени',price:5800,cat:'beauty',seller:'@beauty_box',badge:'',desc:'Оригинал, использована 2 раза.'},
+  {id:10,e:'📸',name:'Sony ZV-E10 + Kit',price:54000,cat:'electronics',seller:'@photo_shop',badge:'',desc:'Пробег 2000 кадров. Полный комплект.'},
+];
+const MY_LISTINGS=[
+  {id:1,e:'💻',name:'MacBook Air M2',desc:'8/256GB, Silver',price:85000,status:'active'},
+  {id:2,e:'📸',name:'Canon EOS M50 II',desc:'Kit 15-45mm',price:32000,status:'sold'},
+  {id:3,e:'🎧',name:'Sony WH-1000XM5',desc:'NC беспроводные',price:22500,status:'pending'},
+];
+const ADM_USERS=[
+  {i:'М',name:'Мария Смирнова',tg:'@masha_s',role:'moderator',c:'#8b5cf6'},
+  {i:'Д',name:'Дмитрий Кузнецов',tg:'@dima_k',role:'user',c:'#10b981'},
+  {i:'Е',name:'Елена Попова',tg:'@elena_p',role:'moderator',c:'#f59e0b'},
+  {i:'И',name:'Иван Соколов',tg:'@ivan_sokol',role:'user',c:'#3b82f6'},
+  {i:'О',name:'Ольга Новикова',tg:'@olga_n',role:'user',c:'#f43f5e'},
+];
+const EMOJIS=['📱','💻','👟','🎮','📸','🎧','👗','⌚','🧴','🏋️','🛋️','🎨','🚗','🎸','📚','🧸','🎀','🛒','🔧','💡','🎩','🕶️'];
+let favs=new Set(),selEmoji='📱',activeCat='all',role='owner';
+
+function init(){
+  document.getElementById('gName').textContent=uName;
+  document.getElementById('pName').textContent=(uName+' '+uLast).trim();
+  document.getElementById('pVer').textContent=`@${uNick} · MarketX v1.0`;
+  const pav=document.getElementById('pAv');
+  if(uPhoto){const img=new Image();img.src=uPhoto;img.onload=()=>{pav.innerHTML='';pav.appendChild(img)};}
+  else pav.textContent=uName.charAt(0).toUpperCase();
+  buildEJ();renderProds(PRODUCTS);renderListings();renderAdm();updateRole();
+}
+
+const TABS=['home','listings','fav','admin','profile'];
+function goPage(id){
+  hpt('light');
+  TABS.forEach(t=>{
+    document.getElementById('p-'+t)?.classList.toggle('on',t===id);
+    document.getElementById('nb-'+t)?.classList.toggle('on',t===id);
+  });
+  document.getElementById('scroll').scrollTo(0,0);
+  if(id==='fav')renderFav();
+  if(id==='listings'){tg?.MainButton?.setText('➕ Добавить');tg?.MainButton?.onClick(openAdd);tg?.MainButton?.show();}
+  else{tg?.MainButton?.hide();tg?.MainButton?.offClick(openAdd);}
+  tg?.BackButton?.[id==='home'?'hide':'show']();
+}
+tg?.BackButton?.onClick(()=>{
+  if(document.getElementById('mAdd').classList.contains('on')){document.getElementById('mAdd').classList.remove('on');return;}
+  if(document.getElementById('mProd').classList.contains('on')){document.getElementById('mProd').classList.remove('on');return;}
+  goPage('home');tg.BackButton.hide();
+});
+
+function renderProds(list){
+  const g=document.getElementById('pGrid');
+  if(!list.length){g.innerHTML=`<div style="grid-column:1/-1;text-align:center;color:var(--hint);padding:40px 0;font-size:14px">Ничего не найдено 😔</div>`;return;}
+  g.innerHTML=list.map((p,i)=>`
+    <div class="pcard" style="animation-delay:${i*.04}s" onclick="openProd(${p.id})">
+      <div class="pimg">
+        ${p.e}
+        ${p.badge?`<div class="pbdg ${p.badge==='hot'?'bh':p.badge==='new'?'bn':'bs'}">${{hot:'🔥 Хит',new:'✨ Новый',sale:'💥 Скидка'}[p.badge]}</div>`:''}
+        <button class="fbtn" id="fb${p.id}" onclick="event.stopPropagation();toggleFav(${p.id})">${favs.has(p.id)?'❤️':'🤍'}</button>
+      </div>
+      <div class="pbody">
+        <div class="pname">${p.name}</div>
+        <div class="pfoot">
+          <div class="pprice">₽${p.price.toLocaleString('ru-RU')}</div>
+          <button class="cbtn" onclick="event.stopPropagation();hpt('medium');toast('🛒','В корзину!')">+</button>
+        </div>
+        <div class="pseller">${p.seller}</div>
+      </div>
+    </div>`).join('');
+}
+function doSearch(q){renderProds(PRODUCTS.filter(p=>p.name.toLowerCase().includes(q.toLowerCase())&&(activeCat==='all'||p.cat===activeCat)));}
+function doChip(cat){
+  hpt('light');activeCat=cat;
+  document.querySelectorAll('#chipRow .chip').forEach(c=>c.classList.toggle('on',c.dataset.c===cat));
+  document.getElementById('sInp').value='';
+  renderProds(cat==='all'?PRODUCTS:PRODUCTS.filter(p=>p.cat===cat));
+}
+function openProd(id){
+  hpt('light');const p=PRODUCTS.find(x=>x.id===id);if(!p)return;
+  document.getElementById('pdImg').textContent=p.e;
+  document.getElementById('pdName').textContent=p.name;
+  document.getElementById('pdPrice').textContent=`₽${p.price.toLocaleString('ru-RU')}`;
+  document.getElementById('pdSeller').textContent=p.seller;
+  document.getElementById('pdDesc').textContent=p.desc;
+  document.getElementById('mProd').classList.add('on');
+  tg?.BackButton?.show();
+}
+function toggleFav(id){
+  hpt('medium');
+  if(favs.has(id)){favs.delete(id);hptn('warning');toast('💔','Убрано из избранного');}
+  else{favs.add(id);hptn('success');toast('❤️','Добавлено в избранное');}
+  const b=document.getElementById('fb'+id);if(b)b.textContent=favs.has(id)?'❤️':'🤍';
+  document.querySelector('#nb-fav .nb-i').textContent=favs.size?'❤️':'🤍';
+}
+function renderFav(){
+  const list=PRODUCTS.filter(p=>favs.has(p.id));
+  const g=document.getElementById('favGrid'),e=document.getElementById('favEmpty');
+  if(!list.length){g.innerHTML='';e.style.display='flex';return;}
+  e.style.display='none';
+  g.innerHTML=list.map(p=>`
+    <div class="pcard" onclick="openProd(${p.id})">
+      <div class="pimg">${p.e}<button class="fbtn" onclick="event.stopPropagation();toggleFav(${p.id});renderFav()">❤️</button></div>
+      <div class="pbody"><div class="pname">${p.name}</div><div class="pfoot"><div class="pprice">₽${p.price.toLocaleString('ru-RU')}</div></div><div class="pseller">${p.seller}</div></div>
+    </div>`).join('');
+}
+function renderListings(){
+  document.getElementById('lstWrap').innerHTML=MY_LISTINGS.map(l=>`
+    <div class="li" onclick="hpt('light');toast('📄','${l.name.replace(/'/g,"\\'")}')">
+      <div class="li-ico">${l.e}</div>
+      <div style="flex:1;min-width:0">
+        <div class="li-name">${l.name}</div>
+        <div class="li-desc">${l.desc}</div>
+        <div class="li-row">
+          <div class="li-price">₽${l.price.toLocaleString('ru-RU')}</div>
+          <div class="sc ${l.status==='active'?'sa':l.status==='sold'?'ss':'sp'}">${l.status==='active'?'✓ Активно':l.status==='sold'?'✗ Продано':'⏳ На проверке'}</div>
+        </div>
+      </div>
+    </div>`).join('');
+}
+function buildEJ(){document.getElementById('ejGrid').innerHTML=EMOJIS.map((e,i)=>`<div class="ej ${i===0?'on':''}" onclick="pickEJ(this,'${e}')">${e}</div>`).join('');}
+function pickEJ(el,e){hpt('light');document.querySelectorAll('.ej').forEach(x=>x.classList.remove('on'));el.classList.add('on');selEmoji=e;}
+function openAdd(){hpt('light');document.getElementById('mAdd').classList.add('on');tg?.BackButton?.show();}
+function submitListing(){
+  const name=document.getElementById('nName').value.trim();
+  const price=parseInt(document.getElementById('nPrice').value)||0;
+  const desc=document.getElementById('nDesc').value.trim()||'Без описания';
+  if(!name||!price){hptn('error');toast('⚠️','Укажите название и цену');return;}
+  MY_LISTINGS.unshift({id:Date.now(),e:selEmoji,name,desc,price,status:'pending'});
+  renderListings();
+  tg?.sendData?.(JSON.stringify({action:'new_listing',name,price,emoji:selEmoji,desc}));
+  document.getElementById('mAdd').classList.remove('on');
+  ['nName','nDesc','nPrice'].forEach(id=>document.getElementById(id).value='');
+  hptn('success');toast('🎉','Объявление отправлено на модерацию!');
+}
+function renderAdm(){
+  document.getElementById('admUsers').innerHTML=ADM_USERS.map(u=>`
+    <div class="urow">
+      <div class="uav" style="background:${u.c}20;color:${u.c}">${u.i}</div>
+      <div><div class="un">${u.name}</div><div class="ur" style="color:${u.role==='moderator'?'#8b5cf6':'var(--hint)'}">${u.role==='moderator'?'🛡️ Модератор':'👤 Пользователь'}</div><div class="utg">${u.tg}</div></div>
+      <div class="ubtns">
+        ${role==='owner'?`<button class="ubtn um" onclick="hpt('medium');toast('🛡️','Роль изменена')">Роль</button>`:''}
+        <button class="ubtn uw" onclick="hpt('medium');toast('⚠️','Warn отправлен')">Warn</button>
+        <button class="ubtn ub" onclick="hpt('medium');toast('🚫','Заблокирован')">Ban</button>
+      </div>
+    </div>`).join('');
+}
+function setRole(r,el){
+  hpt('medium');role=r;
+  document.querySelectorAll('#roleChips .chip').forEach(c=>c.classList.toggle('on',c.dataset.r===r));
+  updateRole();renderAdm();
+  toast('🔄',{owner:'Вы — 👑 Владелец',moderator:'Вы — 🛡️ Модератор',user:'Вы — 👤 Пользователь'}[r]);
+}
+function updateRole(){
+  const C={owner:{pc:'rt-own',prt:'pro',lbl:'👑 Владелец',crn:'👑',adm:true},moderator:{pc:'rt-mod',prt:'prm',lbl:'🛡️ Модератор',crn:'🛡️',adm:true},user:{pc:'rt-usr',prt:'pru',lbl:'👤 Пользователь',crn:'',adm:false}}[role];
+  document.getElementById('rolePill').className=`role-tag ${C.pc}`;document.getElementById('rolePill').textContent=C.lbl;
+  document.getElementById('pRt').className=`prt ${C.prt}`;document.getElementById('pRt').textContent=C.lbl;
+  const cr=document.getElementById('pCrn');cr.textContent=C.crn;cr.style.display=C.crn?'':'none';
+  document.getElementById('nb-admin').style.display=C.adm?'':'none';
+}
+function closeMo(id,e){if(e.target===document.getElementById(id))document.getElementById(id).classList.remove('on');}
+let _tt;
+function toast(ico,txt){
+  clearTimeout(_tt);
+  document.getElementById('tIco').textContent=ico;document.getElementById('tTxt').textContent=txt;
+  const el=document.getElementById('toast');el.classList.add('on');
+  _tt=setTimeout(()=>el.classList.remove('on'),2600);
+}
+init();
+</script>
+</body>
+</html>
